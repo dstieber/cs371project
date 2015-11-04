@@ -238,11 +238,13 @@ void init_ship(void)
 {
     Object *o;
     nobjects=0;
+    int ncolors = 0;
     char ts[200], *ptr;
     int nverts=0;
     nfaces = 0;
     Vec *vert = new Vec[3000];
     iVec *face = new iVec[3000];
+    Vec *color = new Vec[3000];
     FILE *fin = fopen("ship.txt", "r");
     if (!fin) printf("file not open\n");
     if (fin) {
@@ -269,10 +271,19 @@ void init_ship(void)
                 face[nfaces][2] = atoi(ptr);
                 nfaces++;
             }
+            if (*ptr == 'c') {
+                ptr = findSpace(ptr)+1;
+                color[ncolors][0] = atof(ptr);
+                ptr = findSpace(ptr)+1;
+                color[ncolors][1] = atof(ptr);
+                ptr = findSpace(ptr)+1;
+                color[ncolors][2] = atof(ptr);
+                ncolors++;
+            }
         }
         fclose(fin);
     }
-    Vec mv;
+    //Vec mv;
     for (int i=0; i<nfaces; i++) {
         o = &object[nobjects];
         o->type = TYPE_TRIANGLE;
@@ -280,8 +291,8 @@ void init_ship(void)
         f=face[i][0]-1; vecMake(vert[f][0],vert[f][1],vert[f][2],o->tri[1]);
         f=face[i][1]-1; vecMake(vert[f][0],vert[f][1],vert[f][2],o->tri[0]);
         f=face[i][2]-1; vecMake(vert[f][0],vert[f][1],vert[f][2],o->tri[2]);
-        vecMake(0.9,0.9,0.9, o->color);
-        vecMake(0.0, 0.0, 0.0, mv);
+        vecMake(color[i][0],color[i][1],color[i][2], o->color);
+        //vecMake(0.0, 0.0, 0.0, mv);
         for (int j=0; j<3; j++) {
             //move(mv, o->tri[j]);
             scale(0.45, o->tri[j]);
@@ -295,6 +306,7 @@ void init_ship(void)
     }
     delete vert;
     delete face;
+    delete color;
 }
 
 void init_textures(void)
@@ -971,19 +983,29 @@ void DrawGLScene9()
 	glLoadIdentity();
 	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
 	glTranslatef(0.0f,-1.0f,-6.0f);
+	//glRotatef(180.0,0.0f,1.0f,0.0f);
 	glRotatef(rtri,0.0f,1.0f,0.0f);
-	//glRotatef(rtri,1.0f,1.0f,1.0f);
-    glColor3f(0.6f,0.7f,0.8f);
+    //glColor3f(0.6f,0.7f,0.8f);
     Object *o;
 	glBegin(GL_TRIANGLES);
     for (int i=0; i<nfaces; i++) {
         o = &object[i];
+        glColor3f(o->color[0], o->color[1], o->color[2]);
 		glNormal3f( o->norm[0], o->norm[1], o->norm[2]);
 		glVertex3f( o->tri[0][0], o->tri[0][1], o->tri[0][2]);
 		glVertex3f( o->tri[1][0], o->tri[1][1], o->tri[1][2]);
 		glVertex3f( o->tri[2][0], o->tri[2][1], o->tri[2][2]);
 		//back side
     }
+	glEnd();
+    //ground
+    glColor3f(0.2f, 0.8f, 0.2f);
+    glBegin(GL_QUADS);
+		glNormal3f(0.0,1.0,0.0);
+		glVertex3f(-20.0, -1.031, -20.0);
+		glVertex3f(-20.0, -1.031,  20.0);
+		glVertex3f( 20.0, -1.031,  20.0);
+		glVertex3f( 20.0, -1.031, -20.0);
 	glEnd();
 	rtri  += 1.0f;
 }
